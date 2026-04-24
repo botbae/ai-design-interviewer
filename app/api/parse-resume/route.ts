@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PDFParse } from 'pdf-parse';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const pdfParse = require('pdf-parse');
 
 export async function POST(req: NextRequest) {
   let formData: FormData;
@@ -19,11 +22,10 @@ export async function POST(req: NextRequest) {
   const buffer = Buffer.from(await file.arrayBuffer());
 
   try {
-    const parser = new PDFParse({ data: buffer });
-    const result = await parser.getText();
-    return NextResponse.json({ text: result.text });
+    const data = await pdfParse(buffer);
+    return NextResponse.json({ text: data.text });
   } catch (err) {
-    console.error('[parse-resume] pdf-parse failed:', err);
-    return NextResponse.json({ error: 'Failed to parse PDF' }, { status: 422 });
+    console.error('PDF parse failed:', err);
+    return NextResponse.json({ error: 'PDF parsing failed in production' }, { status: 500 });
   }
 }
