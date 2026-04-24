@@ -43,6 +43,7 @@ export default function Home() {
   return (
     <main className="min-h-screen flex flex-col items-center justify-center gap-6 p-8">
       <h1 className="text-2xl font-bold">AI Interview Demo</h1>
+      <p className="text-sm text-gray-500">AI-led Product Design Interview, a prototype by Ayan Aggarwal</p>
       <div className="flex flex-col gap-4 w-full max-w-md">
         <label className="flex flex-col gap-1 text-sm font-medium">
           Resume (PDF)

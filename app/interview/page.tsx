@@ -19,6 +19,7 @@ export default function InterviewPage() {
   const [loading, setLoading] = useState(false);
   const [candidate, setCandidate] = useState<Candidate | null>(null);
   const [error, setError] = useState('');
+  const [complete, setComplete] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const startedRef = useRef(false);
 
@@ -70,11 +71,14 @@ export default function InterviewPage() {
       const { done, value } = await reader.read();
       if (done) break;
       assistantText += decoder.decode(value, { stream: true });
+      const hasSignal = assistantText.includes('[INTERVIEW_COMPLETE]');
+      const displayText = assistantText.replace(/\[INTERVIEW_COMPLETE\]/g, '').trimEnd();
       setMessages(prev => {
         const updated = [...prev];
-        updated[updated.length - 1] = { role: 'assistant', content: assistantText };
+        updated[updated.length - 1] = { role: 'assistant', content: displayText };
         return updated;
       });
+      if (hasSignal) setComplete(true);
     }
 
     setLoading(false);
@@ -124,6 +128,11 @@ export default function InterviewPage() {
         ))}
         {loading && messages[messages.length - 1]?.role !== 'assistant' && (
           <div className="bg-gray-100 rounded p-3 text-sm text-gray-400">…</div>
+        )}
+        {complete && (
+          <div className="text-sm text-gray-500 py-2">
+            {"That's a wrap from my end. Feel free to ask any questions you have."}
+          </div>
         )}
         <div ref={bottomRef} />
       </div>
