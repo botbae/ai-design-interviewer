@@ -1,31 +1,26 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
+import { extractText } from "unpdf";
 
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const pdfParse = require('pdf-parse');
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
-  let formData: FormData;
   try {
-    formData = await req.formData();
-  } catch {
-    return NextResponse.json({ error: 'Invalid form data' }, { status: 400 });
-  }
+    const formData = await req.formData();
+    const file = formData.get("file") as File;
 
-  const file = formData.get('file');
-  if (!file || !(file instanceof Blob)) {
-    return NextResponse.json({ error: 'Missing file' }, { status: 400 });
-  }
+    if (!file) {
+      return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
+    }
 
-  const buffer = Buffer.from(await file.arrayBuffer());
+    const buffer = await file.arrayBuffer();
+    const { text } = await extractText(new Uint8Array(buffer), {
+      mergePages: true,
+    });
 
-  try {
-    const data = await pdfParse(buffer);
-    return NextResponse.json({ text: data.text });
+    return NextResponse.json({ text });
   } catch (err) {
-    console.error('PDF parse failed:', err);
-    return NextResponse.json({ error: 'PDF parsing failed in production' }, { status: 500 });
+    console.error("PDF parse failed:", err);
+    return NextResponse.json({ error: "PDF parsing failed" }, { status: 500 });
   }
 }
