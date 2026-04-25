@@ -9,12 +9,16 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 type Phase = 'orientation' | 'motivation' | 'past_work' | 'scenario' | 'critique' | 'wrap' | 'complete';
 
 const PHASE_INSTRUCTIONS: Record<Phase, string> = {
-  orientation: `CURRENT PHASE: Orientation.
-Set context briefly. Explain this will be a short product design interview covering motivation, one past-work deep dive, one scenario, one critique round, and a wrap. Then ask a light opening question.
-Send exactly 3 short messages separated by [SPLIT] as described in the OPENING section above.`,
+  orientation: `You are in Orientation. You MUST follow this exactly:
+Message 1: Greet the candidate warmly by name.
+Message 2: Set expectation. Say this is a structured PD interview. It will cover a bit of context, one past-work deep dive, a startup scenario, and a design critique. Keep it brief and casual.
+Message 3: Ask one light opener - what is pulling them to this role or this type of work right now.
+Keep [SPLIT] between each orientation message.
+STRICT RULE: Do NOT reference any specific project from the resume yet. Do NOT ask about past work. Orientation ends after 2 assistant turns.`,
 
-  motivation: `CURRENT PHASE: Motivation and Context.
-Do not jump into project details. Ask why this role or this moment interests the candidate. Understand their trajectory and what product problems they want to work on.`,
+  motivation: `You are in Motivation and Context. STRICT RULE: Do NOT reference specific resume projects yet. Do NOT ask about past work details. Stay at trajectory and intent level only.
+Ask about: why this role, why now, what kind of product problems they want to work on, what they are moving toward.
+This phase ends after 2 assistant questions. Then move to past work.`,
 
   past_work: `CURRENT PHASE: Past Work Anchor.
 Pick one real project from their resume and go deep. Probe for problem framing, personal ownership, tradeoffs made, what shipped, what failed, and outcome. One question at a time.`,

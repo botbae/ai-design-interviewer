@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 type Phase = 'orientation' | 'motivation' | 'past_work' | 'scenario' | 'critique' | 'wrap' | 'complete';
 
 const PHASE_LIMITS: Partial<Record<Phase, number>> = {
-  orientation: 1,
+  orientation: 2,
   motivation: 2,
   past_work: 4,
   scenario: 3,
