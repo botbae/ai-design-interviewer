@@ -9,11 +9,10 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 type Phase = 'orientation' | 'motivation' | 'past_work' | 'scenario' | 'critique' | 'wrap' | 'complete';
 
 const PHASE_INSTRUCTIONS: Record<Phase, string> = {
-  orientation: `You are in Orientation. You MUST follow this exactly:
+  orientation: `You are in Orientation. Send exactly 3 messages separated by [SPLIT].
 Message 1: Greet the candidate warmly by name.
-Message 2: Set expectation. Say this is a structured PD interview. It will cover a bit of context, one past-work deep dive, a startup scenario, and a design critique. Keep it brief and casual.
-Message 3: Ask one light opener - what is pulling them to this role or this type of work right now.
-Keep [SPLIT] between each orientation message.
+Message 2: Say exactly: "I'm Ayan, Product Designer at Alt Inc. This is an AI-led conversation, just a heads up."
+Message 3: Say this will be a short structured chat covering some context, one work deep dive, a scenario, and a critique. Then ask: "Before we get into projects, what's pulling you toward this kind of product design work right now?"
 STRICT RULE: Do NOT reference any specific project from the resume yet. Do NOT ask about past work. Orientation ends after 2 assistant turns.`,
 
   motivation: `You are in Motivation and Context. STRICT RULE: Do NOT reference specific resume projects yet. Do NOT ask about past work details. Stay at trajectory and intent level only.
