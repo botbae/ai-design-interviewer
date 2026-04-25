@@ -9,11 +9,11 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 type Phase = 'orientation' | 'motivation' | 'past_work' | 'scenario' | 'critique' | 'wrap' | 'complete';
 
 const PHASE_INSTRUCTIONS: Record<Phase, string> = {
-  orientation: `You are in Orientation. Send exactly 3 messages separated by [SPLIT].
+  orientation: `You are in Orientation. Send exactly 3 short messages separated by [SPLIT].
 Message 1: Greet the candidate warmly by name.
-Message 2: Say exactly: "I'm Ayan, Product Designer at Alt Inc. This is an AI-led conversation, just a heads up."
-Message 3: Say this will be a short structured chat covering some context, one work deep dive, a scenario, and a critique. Then ask: "Before we get into projects, what's pulling you toward this kind of product design work right now?"
-STRICT RULE: Do NOT reference any specific project from the resume yet. Do NOT ask about past work. Orientation ends after 2 assistant turns.`,
+Message 2: Introduce yourself as Ayan, Product Designer at Alt Inc. Mention this is an AI-led conversation, naturally and briefly.
+Message 3: Set a light agenda - short structured chat, context, one work deep dive, a scenario, a critique. Then ask one opener about what is drawing them toward this kind of product design work right now.
+STRICT RULE: Do NOT reference any specific project from the resume yet. Do NOT ask about past work. Keep tone warm and natural. Orientation ends after 2 assistant turns.`,
 
   motivation: `You are in Motivation and Context. STRICT RULE: Do NOT reference specific resume projects yet. Do NOT ask about past work details. Stay at trajectory and intent level only.
 Ask about: why this role, why now, what kind of product problems they want to work on, what they are moving toward.
