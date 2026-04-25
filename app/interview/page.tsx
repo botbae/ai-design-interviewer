@@ -255,7 +255,7 @@ export default function InterviewPage() {
               <div
                 className={`rounded-xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap max-w-lg ${
                   msg.role === 'assistant'
-                    ? 'bg-[#0f1520] text-slate-200 ring-1 ring-white/[0.05] border-l-2 border-violet-500/30'
+                    ? 'bg-[#0f1520] text-slate-200 ring-1 ring-white/[0.05]'
                     : 'bg-[#1e2a3d] text-slate-100 ring-1 ring-white/[0.05]'
                 }`}
               >
@@ -272,7 +272,7 @@ export default function InterviewPage() {
                   AA
                 </AvatarFallback>
               </Avatar>
-              <div className="bg-[#0f1520] ring-1 ring-white/[0.05] border-l-2 border-violet-500/30 rounded-xl px-4 py-3.5 flex items-center gap-1.5">
+              <div className="bg-[#0f1520] ring-1 ring-white/[0.05] rounded-xl px-4 py-3.5 flex items-center gap-1.5">
                 <span className="size-1.5 bg-slate-600 rounded-full animate-bounce [animation-delay:-0.3s]" />
                 <span className="size-1.5 bg-slate-600 rounded-full animate-bounce [animation-delay:-0.15s]" />
                 <span className="size-1.5 bg-slate-600 rounded-full animate-bounce" />
