@@ -32,6 +32,8 @@ export default function Home() {
       }
       const data = await res.json();
       localStorage.removeItem('transcript');
+      localStorage.removeItem('interviewPhase');
+      localStorage.removeItem('phaseCount');
       localStorage.setItem('candidate', JSON.stringify({ resume: data.text, github, linkedin }));
       router.push('/interview');
     } catch {
