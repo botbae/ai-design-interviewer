@@ -1,6 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 
 type Phase = 'orientation' | 'motivation' | 'past_work' | 'scenario' | 'critique' | 'wrap' | 'complete';
 
@@ -59,7 +63,6 @@ export default function InterviewPage() {
   const [complete, setComplete] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const startedRef = useRef(false);
-  // Refs so async sendToApi always reads current phase state
   const phaseRef = useRef<Phase>('orientation');
   const phaseCountRef = useRef(0);
 
@@ -203,39 +206,57 @@ export default function InterviewPage() {
 
   if (error && !candidate) {
     return (
-      <main className="min-h-screen bg-gray-950 flex items-center justify-center p-8">
-        <p className="text-red-400">{error}</p>
+      <main className="min-h-screen bg-[#0b0f14] flex items-center justify-center p-8">
+        <p className="text-red-400 text-sm">{error}</p>
       </main>
     );
   }
 
+  const showTypingIndicator =
+    loading && (messages.length === 0 || messages[messages.length - 1]?.role !== 'assistant');
+
   return (
-    <main className="min-h-screen bg-gray-950 text-gray-100 flex flex-col">
-      <header className="border-b border-gray-800 px-4 py-3 text-center shrink-0">
-        <p className="text-sm font-semibold text-white">AI Product Design Interview</p>
-        <p className="text-xs text-gray-500">Prototype by Ayan Aggarwal</p>
+    <main className="min-h-screen bg-[#0b0f14] text-slate-100 flex flex-col">
+      {/* Header */}
+      <header className="shrink-0 border-b border-white/[0.05] px-4 py-3 text-center">
+        <p className="text-sm font-semibold text-white tracking-tight">
+          AI Product Design Interview
+        </p>
+        <p className="text-[10px] font-[family-name:var(--font-geist-mono)] text-slate-600 mt-0.5 tracking-wider">
+          Prototype · Ayan Aggarwal
+        </p>
       </header>
 
-      <div className="bg-gray-900 border-b border-gray-800 px-4 py-2 text-center shrink-0">
-        <p className="text-xs text-gray-400">
-          {"You're chatting with Ayan Aggarwal, Product Designer at Alt Inc. This is an AI-led interview prototype."}
-        </p>
+      {/* AI disclosure banner */}
+      <div className="shrink-0 border-b border-white/[0.04] bg-white/[0.015] px-4 py-2 flex justify-center">
+        <Badge
+          variant="outline"
+          className="border-white/[0.06] text-slate-500 text-[10px] font-[family-name:var(--font-geist-mono)] tracking-wide bg-transparent"
+        >
+          AI-led · Speaking as Ayan Aggarwal, Product Designer at Alt Inc.
+        </Badge>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 py-6">
-        <div className="flex flex-col gap-4 max-w-2xl mx-auto">
+      {/* Message list */}
+      <div className="flex-1 overflow-y-auto px-4 py-8">
+        <div className="flex flex-col gap-5 max-w-2xl mx-auto">
           {messages.map((msg, i) => (
-            <div key={i} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            <div
+              key={i}
+              className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            >
               {msg.role === 'assistant' && (
-                <div className="shrink-0 w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-xs font-semibold text-white">
-                  AA
-                </div>
+                <Avatar className="shrink-0 mt-1 size-8 ring-1 ring-white/[0.07]">
+                  <AvatarFallback className="bg-[#161d2b] text-[9px] font-[family-name:var(--font-geist-mono)] font-semibold text-slate-500 tracking-widest">
+                    AA
+                  </AvatarFallback>
+                </Avatar>
               )}
               <div
-                className={`rounded-lg px-3 py-2 text-sm whitespace-pre-wrap max-w-lg ${
+                className={`rounded-xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap max-w-lg ${
                   msg.role === 'assistant'
-                    ? 'bg-gray-800 text-gray-100'
-                    : 'bg-white text-gray-900'
+                    ? 'bg-[#0f1520] text-slate-200 ring-1 ring-white/[0.05] border-l-2 border-violet-500/30'
+                    : 'bg-[#1e2a3d] text-slate-100 ring-1 ring-white/[0.05]'
                 }`}
               >
                 {msg.content}
@@ -243,44 +264,57 @@ export default function InterviewPage() {
             </div>
           ))}
 
-          {loading && messages[messages.length - 1]?.role !== 'assistant' && (
+          {/* Typing indicator */}
+          {showTypingIndicator && (
             <div className="flex gap-3 justify-start">
-              <div className="shrink-0 w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-xs font-semibold text-white">
-                AA
+              <Avatar className="shrink-0 mt-1 size-8 ring-1 ring-white/[0.07]">
+                <AvatarFallback className="bg-[#161d2b] text-[9px] font-[family-name:var(--font-geist-mono)] font-semibold text-slate-500 tracking-widest">
+                  AA
+                </AvatarFallback>
+              </Avatar>
+              <div className="bg-[#0f1520] ring-1 ring-white/[0.05] border-l-2 border-violet-500/30 rounded-xl px-4 py-3.5 flex items-center gap-1.5">
+                <span className="size-1.5 bg-slate-600 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                <span className="size-1.5 bg-slate-600 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                <span className="size-1.5 bg-slate-600 rounded-full animate-bounce" />
               </div>
-              <div className="bg-gray-800 rounded-lg px-3 py-2 text-sm text-gray-500">…</div>
             </div>
           )}
 
+          {/* Interview complete */}
           {complete && (
-            <p className="text-xs text-gray-500 text-center py-2">
-              {"That's a wrap from my end. Feel free to ask any questions you have."}
-            </p>
+            <div className="flex items-center gap-4 py-4">
+              <div className="flex-1 h-px bg-white/[0.05]" />
+              <p className="text-[10px] font-[family-name:var(--font-geist-mono)] text-slate-600 tracking-widest uppercase">
+                Interview complete
+              </p>
+              <div className="flex-1 h-px bg-white/[0.05]" />
+            </div>
           )}
 
           <div ref={bottomRef} />
         </div>
       </div>
 
-      <div className="border-t border-gray-800 px-4 py-3 shrink-0">
-        <div className="max-w-2xl mx-auto">
-          {error && <p className="text-red-400 text-sm mb-2">{error}</p>}
+      {/* Input dock */}
+      <div className="shrink-0 border-t border-white/[0.05] bg-[#0b0f14] px-4 py-4">
+        <div className="max-w-2xl mx-auto flex flex-col gap-2">
+          {error && <p className="text-red-400 text-xs">{error}</p>}
           <div className="flex gap-2">
-            <textarea
+            <Textarea
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               rows={2}
               placeholder="Type your answer… (Enter to send, Shift+Enter for newline)"
-              className="flex-1 border border-gray-700 rounded-lg px-3 py-2 text-sm resize-none bg-gray-900 text-gray-100 placeholder:text-gray-600 focus:outline-none focus:border-gray-500"
+              className="flex-1 resize-none bg-[#0f1520] border-white/[0.07] text-slate-200 placeholder:text-slate-700 text-sm focus-visible:border-violet-500/40 focus-visible:ring-violet-500/[0.10] rounded-xl"
             />
-            <button
+            <Button
               onClick={handleSend}
               disabled={loading || !input.trim()}
-              className="bg-white text-gray-900 rounded-lg px-4 py-2 text-sm font-medium hover:bg-gray-200 disabled:opacity-40"
+              className="shrink-0 self-stretch px-5 bg-white text-[#0b0f14] hover:bg-slate-100 font-semibold text-sm rounded-xl disabled:opacity-30 transition-colors"
             >
               Send
-            </button>
+            </Button>
           </div>
         </div>
       </div>
