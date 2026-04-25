@@ -81,47 +81,53 @@ export default function Home() {
         <Card className="bg-[#0f1520] ring-white/[0.06] shadow-2xl shadow-black/60 rounded-2xl">
           <CardContent className="flex flex-col gap-5 pt-6 pb-6">
             {/* Resume upload */}
-            <div className="flex flex-col gap-2">
+            <label htmlFor="resume-file" className="flex flex-col gap-2 cursor-pointer">
               <span className="text-[10px] font-[family-name:var(--font-geist-mono)] font-medium tracking-widest uppercase text-slate-500">
                 Resume — PDF
               </span>
               <div className="rounded-lg border border-white/[0.07] bg-white/[0.03] px-3 py-2.5">
                 <input
                   ref={fileRef}
+                  id="resume-file"
+                  name="resume"
                   type="file"
                   accept="application/pdf"
                   className="w-full text-sm text-slate-400 file:mr-3 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[11px] file:font-medium file:bg-white/[0.08] file:text-slate-300 hover:file:bg-white/[0.12] cursor-pointer"
                 />
               </div>
-            </div>
+            </label>
 
             {/* GitHub */}
-            <div className="flex flex-col gap-2">
+            <label htmlFor="github-url" className="flex flex-col gap-2">
               <span className="text-[10px] font-[family-name:var(--font-geist-mono)] font-medium tracking-widest uppercase text-slate-500">
                 GitHub — optional
               </span>
               <Input
+                id="github-url"
+                name="github"
                 type="url"
                 value={github}
                 onChange={e => setGithub(e.target.value)}
                 placeholder="https://github.com/username"
                 className="bg-white/[0.03] border-white/[0.07] text-slate-200 placeholder:text-slate-700 focus-visible:border-violet-500/40 focus-visible:ring-violet-500/[0.12] h-9 text-sm rounded-lg"
               />
-            </div>
+            </label>
 
             {/* LinkedIn */}
-            <div className="flex flex-col gap-2">
+            <label htmlFor="linkedin-url" className="flex flex-col gap-2">
               <span className="text-[10px] font-[family-name:var(--font-geist-mono)] font-medium tracking-widest uppercase text-slate-500">
                 LinkedIn — optional
               </span>
               <Input
+                id="linkedin-url"
+                name="linkedin"
                 type="url"
                 value={linkedin}
                 onChange={e => setLinkedin(e.target.value)}
                 placeholder="https://linkedin.com/in/username"
                 className="bg-white/[0.03] border-white/[0.07] text-slate-200 placeholder:text-slate-700 focus-visible:border-violet-500/40 focus-visible:ring-violet-500/[0.12] h-9 text-sm rounded-lg"
               />
-            </div>
+            </label>
 
             {error && (
               <p className="text-xs text-red-400">{error}</p>
