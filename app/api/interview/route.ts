@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
   const cfg = getConfig();
   const { candidate, messages, phase } = parsed.value;
   const pieces = streamText(settings, {
-    system: buildInterviewSystemPrompt(cfg, phase, candidate),
+    system: buildInterviewSystemPrompt(cfg, phase, candidate, messages),
     messages: withBootstrap(mergeConsecutive(messages)),
     maxTokens: cfg.limits.maxOutputTokens,
   });

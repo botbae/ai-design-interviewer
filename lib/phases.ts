@@ -95,3 +95,58 @@ export function splitReply(raw: string): { parts: string[]; complete: boolean } 
     .filter(p => p.length > 0);
   return { parts, complete };
 }
+
+// ---------- Skips and very short answers ----------
+
+/** What the Skip button sends. */
+export const SKIP_TEXT = "I'd like to skip this one.";
+
+const LOW_EFFORT =
+  /^(i'?d like to skip this one|skip|pass|next|idk|i don'?t know|dunno|not sure|no idea|nothing|n\/?a|no|nope|yes|yeah|yep|ok(ay)?|sure|fine|hmm+|-+|\.+|\?+)[\s.!?]*$/i;
+
+/** True for a skip, "idk", or a one- or two-word reply with no real content. */
+export function isLowEffort(text: string): boolean {
+  const t = text.trim();
+  if (!t) return true;
+  if (LOW_EFFORT.test(t)) return true;
+  return t.length <= 12 && t.split(/\s+/).length <= 2;
+}
+
+/** How many of the candidate's latest answers in a row were skips or very short. */
+export function lowEffortStreak(messages: ChatMessage[]): number {
+  let streak = 0;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const m = messages[i];
+    if (m.role !== 'user') continue;
+    if (!isLowEffort(m.content)) break;
+    streak++;
+  }
+  return streak;
+}
+
+const SKIP = /^(i'?d like to skip this one|skip( this( one)?)?|pass|next|idk|i don'?t know|dunno|no idea)[\s.!?]*$/i;
+
+/** How many of the candidate's latest answers in a row were skips or "I don't know". */
+export function skipStreak(messages: ChatMessage[]): number {
+  let streak = 0;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const m = messages[i];
+    if (m.role !== 'user') continue;
+    if (!SKIP.test(m.content.trim())) break;
+    streak++;
+  }
+  return streak;
+}
+
+/** After this many skips in a row, the interview moves to the wrap-up. */
+export const EARLY_FINISH_STREAK = 3;
+
+const FINISH_REQUEST =
+  /^(let'?s |can we |i'?d like to |i want to )?(please )?(finish|wrap( it)? up|stop|end|end it|end here|finish here|i'?m done|done|that'?s enough)( (now|here|please|for now|for today))?[\s.!]*$/i;
+
+/** True when the candidate asked to stop, or skipped several questions in a row. */
+export function wantsToFinish(messages: ChatMessage[]): boolean {
+  const last = messages[messages.length - 1];
+  if (!last || last.role !== 'user') return false;
+  return FINISH_REQUEST.test(last.content.trim()) || skipStreak(messages) >= EARLY_FINISH_STREAK;
+}

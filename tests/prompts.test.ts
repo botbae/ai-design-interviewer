@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { PHASE_ORDER } from '@/lib/phases';
-import { buildInterviewSystemPrompt, buildReportPrompt, PHASE_INSTRUCTIONS, withBootstrap } from '@/lib/prompts';
+import { buildInterviewSystemPrompt, buildSituationNote, buildReportPrompt, PHASE_INSTRUCTIONS, withBootstrap } from '@/lib/prompts';
 
 const persona = { interviewerName: 'Riley', interviewerRole: 'Product Designer', companyName: 'Acme' };
 const candidate = { resume: 'Resume text', jd: '', github: '', linkedin: '' };
@@ -50,5 +50,25 @@ describe('prompts', () => {
   it('starts the conversation with the candidate side', () => {
     expect(withBootstrap([])[0].role).toBe('user');
     expect(withBootstrap([{ role: 'assistant', content: 'hi' }])[0].role).toBe('user');
+  });
+
+  it('checks in after repeated skips instead of asking more', () => {
+    const skip = (content: string) => ({ role: 'user' as const, content });
+    const q = { role: 'assistant' as const, content: 'q' };
+    expect(buildSituationNote([skip('idk')], 'past_work')).toMatch(/easier/);
+    expect(buildSituationNote([skip('skip'), q, skip('skip')], 'past_work')).toMatch(/keep going, or finish here/);
+    expect(buildSituationNote([skip('I redesigned onboarding at a fintech startup')], 'past_work')).toBe('');
+    expect(buildInterviewSystemPrompt(persona, 'scenario', candidate, [skip('skip')])).toMatch(/RIGHT NOW/);
+  });
+
+  it('does not suggest judgmental stock phrases', () => {
+    const s = buildInterviewSystemPrompt(persona, 'past_work', candidate);
+    expect(s).not.toMatch(/"That tracks\."|limited signal|"That is still a little abstract\."/);
+  });
+
+  it('asks the interviewer to build on earlier answers', () => {
+    const s = buildInterviewSystemPrompt(persona, 'past_work', candidate);
+    expect(s).toMatch(/BUILD ON THE CONVERSATION/);
+    expect(s).toMatch(/do not hop between projects/);
   });
 });

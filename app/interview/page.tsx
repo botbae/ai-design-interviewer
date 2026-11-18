@@ -14,14 +14,14 @@ import {
   PHASE_LABELS,
   phaseStep,
   splitReply,
+  SKIP_TEXT,
   SPLIT_TOKEN,
+  wantsToFinish,
   type ChatMessage,
   type Phase,
 } from '@/lib/phases';
 import { apiFetch, loadPublicConfig, readError, store, type PublicConfig } from '@/lib/browser-storage';
 import type { Candidate } from '@/lib/validate';
-
-const SKIP_TEXT = "I'd like to skip this one.";
 
 export default function InterviewPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -54,10 +54,17 @@ export default function InterviewPage() {
     if (overTime && idx > 0) persistPhase('wrap', 0);
   }
 
+  /** Jumps to the wrap-up if the candidate asked to stop or skipped several questions in a row. */
+  function finishEarlyIfAsked(history: ChatMessage[]) {
+    const idx = ['orientation', 'motivation', 'past_work', 'scenario', 'critique'].indexOf(phaseRef.current);
+    if (idx >= 0 && wantsToFinish(history)) persistPhase('wrap', 0);
+  }
+
   const sendToApi = useCallback(async (history: ChatMessage[], ctx: Candidate) => {
     setLoading(true);
     setError('');
     applyTimeCap(config?.maxMinutes);
+    finishEarlyIfAsked(history);
     const capturedPhase = phaseRef.current;
 
     let rawText = '';

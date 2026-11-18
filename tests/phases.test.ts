@@ -1,5 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { advancePhase, isPhase, mergeConsecutive, PHASE_LIMITS, PHASE_ORDER, phaseStep, splitReply } from '@/lib/phases';
+import {
+  advancePhase,
+  isLowEffort,
+  isPhase,
+  mergeConsecutive,
+  PHASE_LIMITS,
+  PHASE_ORDER,
+  phaseStep,
+  SKIP_TEXT,
+  skipStreak,
+  splitReply,
+  wantsToFinish,
+} from '@/lib/phases';
 
 describe('interview steps', () => {
   it('runs every step in order and ends at complete', () => {
@@ -59,5 +71,28 @@ describe('splitReply', () => {
   it('splits bubbles and detects the end marker', () => {
     expect(splitReply('Hi[SPLIT]\nQuestion?\n[INTERVIEW_COMPLETE]')).toEqual({ parts: ['Hi', 'Question?'], complete: true });
     expect(splitReply('  ')).toEqual({ parts: [], complete: false });
+  });
+});
+
+describe('skips and early finish', () => {
+  const u = (content: string) => ({ role: 'user' as const, content });
+  const a = (content: string) => ({ role: 'assistant' as const, content });
+
+  it('spots skips, idk and very short answers', () => {
+    for (const t of [SKIP_TEXT, 'skip', 'i dont know', 'Yes works', 'ok', '']) expect(isLowEffort(t)).toBe(true);
+    expect(isLowEffort('I led the checkout redesign at Simpl')).toBe(false);
+  });
+
+  it('counts skips in a row and resets on a real answer', () => {
+    expect(skipStreak([u(SKIP_TEXT), a('q'), u('idk'), a('q'), u(SKIP_TEXT)])).toBe(3);
+    expect(skipStreak([u(SKIP_TEXT), a('q'), u('A real answer about my work'), a('q'), u(SKIP_TEXT)])).toBe(1);
+  });
+
+  it('finishes early on request or after three skips', () => {
+    expect(wantsToFinish([a('q'), u('finish here')])).toBe(true);
+    expect(wantsToFinish([a('q'), u("Let's wrap up")])).toBe(true);
+    expect(wantsToFinish([a('q'), u('keep going')])).toBe(false);
+    expect(wantsToFinish([u(SKIP_TEXT), a('q'), u(SKIP_TEXT)])).toBe(false);
+    expect(wantsToFinish([u(SKIP_TEXT), a('q'), u(SKIP_TEXT), a('q'), u('skip')])).toBe(true);
   });
 });
