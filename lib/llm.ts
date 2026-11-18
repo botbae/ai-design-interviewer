@@ -29,6 +29,17 @@ const DEFAULT_MODELS: Record<ProviderName, string> = {
   openai: 'gpt-5-mini',
 };
 
+const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]', 'host.docker.internal']);
+
+/** The lowercase host name of a URL, or '' if it is not a valid URL. Compare hosts, never URL prefixes. */
+export function hostOf(url: string): string {
+  try {
+    return new URL(url).hostname.toLowerCase();
+  } catch {
+    return '';
+  }
+}
+
 export function getLlmSettings(env: NodeJS.ProcessEnv = process.env): LlmSettings {
   const provider = (env.LLM_PROVIDER?.trim().toLowerCase() || 'anthropic') as ProviderName;
   if (provider !== 'anthropic' && provider !== 'openai') {
@@ -40,7 +51,7 @@ export function getLlmSettings(env: NodeJS.ProcessEnv = process.env): LlmSetting
     '';
   const baseUrl = (env.LLM_BASE_URL?.trim() || (provider === 'openai' ? 'https://api.openai.com/v1' : '')).replace(/\/+$/, '');
   // Local servers such as Ollama do not need a key.
-  const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1|host\.docker\.internal)/.test(baseUrl);
+  const isLocal = LOCAL_HOSTS.has(hostOf(baseUrl));
   if (!apiKey && !isLocal) {
     throw new LlmConfigError('No AI key configured. Set LLM_API_KEY (or ANTHROPIC_API_KEY) in .env.local');
   }
@@ -90,10 +101,11 @@ export async function* streamText(s: LlmSettings, r: LlmRequest): AsyncGenerator
  * Other OpenAI-compatible hosts (Ollama, Groq, Gemini) use max_tokens.
  */
 export function tokenLimit(s: LlmSettings, maxTokens: number): Record<string, unknown> {
-  if (s.baseUrl === 'https://api.openai.com/v1' && /^(gpt-5|o\d)/.test(s.model)) {
+  const host = hostOf(s.baseUrl);
+  if (host === 'api.openai.com' && /^(gpt-5|o\d)/.test(s.model)) {
     return { max_completion_tokens: maxTokens * 4, reasoning_effort: 'low' };
   }
-  if (s.baseUrl.startsWith('https://api.cerebras.ai')) {
+  if (host === 'api.cerebras.ai') {
     const effort = /^qwen/i.test(s.model) ? 'none' : /^gpt-oss/i.test(s.model) ? 'low' : undefined;
     return effort ? { max_completion_tokens: maxTokens * 4, reasoning_effort: effort } : { max_tokens: maxTokens };
   }
@@ -159,7 +171,7 @@ export function visionSupported(s: LlmSettings, env: NodeJS.ProcessEnv = process
   if (flag === 'true') return true;
   if (flag === 'false') return false;
   if (s.provider === 'anthropic') return true;
-  return s.baseUrl === 'https://api.openai.com/v1';
+  return hostOf(s.baseUrl) === 'api.openai.com';
 }
 
 export interface DocumentFile {

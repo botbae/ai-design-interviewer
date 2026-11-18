@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getLlmSettings, LlmConfigError, parseOpenAiStream, parseSseLine, tokenLimit, visionSupported } from '@/lib/llm';
+import { getLlmSettings, hostOf, LlmConfigError, parseOpenAiStream, parseSseLine, tokenLimit, visionSupported } from '@/lib/llm';
 
 describe('getLlmSettings', () => {
   it('defaults to Anthropic and reads the old key name', () => {
@@ -67,5 +67,21 @@ describe('tokenLimit', () => {
     expect(tokenLimit(getLlmSettings(env({ ...base, LLM_MODEL: 'gpt-oss-120b' })), 100)).toEqual({ max_completion_tokens: 400, reasoning_effort: 'low' });
     expect(tokenLimit(getLlmSettings(env({ ...base, LLM_MODEL: 'qwen-3.8-27b' })), 100)).toEqual({ max_completion_tokens: 400, reasoning_effort: 'none' });
     expect(tokenLimit(getLlmSettings(env({ ...base, LLM_MODEL: 'llama-x' })), 100)).toEqual({ max_tokens: 100 });
+  });
+});
+
+describe('hostOf', () => {
+  const env = (e: Record<string, string>) => e as unknown as NodeJS.ProcessEnv;
+  it('compares real host names, not URL prefixes', () => {
+    expect(hostOf('https://api.cerebras.ai/v1')).toBe('api.cerebras.ai');
+    expect(hostOf('https://api.cerebras.ai.evil.com/v1')).toBe('api.cerebras.ai.evil.com');
+    expect(hostOf('not a url')).toBe('');
+    const lookalike = getLlmSettings(env({ LLM_PROVIDER: 'openai', LLM_API_KEY: 'k', LLM_BASE_URL: 'https://api.cerebras.ai.evil.com/v1', LLM_MODEL: 'gpt-oss-120b' }));
+    expect(tokenLimit(lookalike, 100)).toEqual({ max_tokens: 100 });
+  });
+
+  it('only skips the key for real local hosts', () => {
+    expect(() => getLlmSettings(env({ LLM_PROVIDER: 'openai', LLM_BASE_URL: 'http://localhost.evil.com/v1' }))).toThrow(LlmConfigError);
+    expect(getLlmSettings(env({ LLM_PROVIDER: 'openai', LLM_BASE_URL: 'http://127.0.0.1:11434/v1' })).apiKey).toBe('');
   });
 });
