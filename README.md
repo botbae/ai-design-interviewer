@@ -1,125 +1,127 @@
-# AI Product Design Interview
+# AI Design Interviewer
 
-An AI-led product design interview that runs as a structured conversation, not a chatbot.
+An open-source AI interviewer for **first-round product design interviews**. Upload a resume (and, if you like, a job description), have a 20-minute chat with an AI interviewer, and get a scored summary report at the end.
 
----
+The twist: **code, not the AI, runs the interview.** A small state machine decides which step you're in and when to move on. The AI only decides *how* to ask within each step. That keeps every candidate on the same path, which is what hiring research recommends for fair, comparable interviews.
 
-## What this is
-
-A prototype that conducts a real product design interview using a phase-based conversation engine. The candidate uploads their resume, and the AI runs through a defined interview arc — orientation, motivation, past work, a startup scenario, and a design critique — before closing cleanly.
-
-Built as part of a product design assignment for Alt Inc.
-
-Live: [hiring-pd-bot.vercel.app](https://hiring-pd-bot.vercel.app)
+> Built by [Ayan Aggarwal](https://linkedin.com/in/ayanaggarwal), a product designer, as a prototype exploring what a good AI-led design interview should feel like.
 
 ---
 
-## Core idea
+## What it does
 
-Most AI chat interfaces are reactive — they respond to whatever the user says. This prototype is different. The interview has structure enforced in code, not just in the prompt. The AI knows which phase it is in, how many turns have been used, and when to move forward. The candidate experience is a conversation; the system underneath is an evaluation engine.
+1. **Upload.** Resume as PDF, Word (.docx), PNG or JPG, or pasted text. Optional job description. Scanned PDFs and photos are read by the AI if your model supports it.
+2. **Interview.** Six steps with fixed turn limits:
 
----
+   | Step | Turns | What happens |
+   |---|---|---|
+   | Welcome | 1 | Says it's an AI, explains the format, asks about motivation |
+   | Motivation | 2 | Why this role, why now |
+   | Past work | 4 | Deep dive on one real project from the resume |
+   | Scenario | 3 | "First designer at a 6-person startup, onboarding is broken. What do you do in week one?" |
+   | Critique | 2 | "One thing a product gets right, one thing quietly broken" |
+   | Wrap-up | 1 | Thanks the candidate and opens the report |
 
-## Key features
+3. **Adapts to the person.** Career switchers, juniors and seniors get different depth. Weak resume and JD matches still get a fair interview. "Skip" and one-word answers are handled calmly, without repeating the question.
+4. **Report.** Six skills scored 1 to 4 with quotes from the conversation as evidence, plus strengths, growth areas and fit with the JD. Save it as PDF or Markdown.
 
-**Structured phase system**
-The interview moves through six phases in order: orientation → motivation → past work → scenario → critique → wrap. Each phase has a turn limit. When the limit is hit, the phase advances automatically.
+Everything stays in the candidate's browser. There's no database and no login.
 
-**Phase enforcement via state**
-Phase and turn count are tracked client-side using refs and persisted to `localStorage`. The current phase is sent to the API on every request so the model receives a specific instruction block — not just a general prompt.
+**Accessible and responsive.** Checked with axe-core against WCAG 2.2 AA (0 issues), full keyboard use with visible focus, screen-reader friendly chat, reduced-motion support, and layouts tested from 320px phones to desktop.
 
-**Adaptive questioning**
-Questions are grounded in the candidate's actual resume. The model is instructed to probe ownership, tradeoffs, problem framing, and taste — not generic design process questions.
+## Quick start
 
-**Low-effort handling**
-If the candidate is one-word or disengaged, the AI acknowledges limited signal calmly and moves on. No shaming, no repeating the same question.
-
-**Resume parsing**
-PDF resumes are parsed server-side on upload. The extracted text is stored in `localStorage` and attached as context to every API call.
-
-**Session resume**
-If the candidate refreshes mid-interview, the transcript and phase state are restored from `localStorage`. The interview picks up where it left off.
-
----
-
-## System design
-
-```
-Landing page
-  └── PDF upload → /api/parse-resume → resume text stored in localStorage
-
-Interview page
-  ├── On mount: load transcript + phase state from localStorage
-  ├── On first load: trigger API call with phase = "orientation"
-  ├── On each user message:
-  │     ├── Append to transcript
-  │     ├── POST to /api/interview with { messages, candidate, phase }
-  │     └── Stream response back, split on [SPLIT] into separate bubbles
-  └── After each response:
-        ├── Increment phase turn counter
-        ├── Advance phase if turn limit reached
-        └── Persist phase + count to localStorage
-```
-
-The API route constructs a system prompt from two layers: a base prompt with identity, reaction rules, and formatting constraints, plus a per-phase instruction block that tells the model exactly what it should be doing in the current moment. Phase progression is deterministic — the model cannot skip ahead or loop.
-
----
-
-## Tech stack
-
-| Layer | Choice |
-|---|---|
-| Framework | Next.js 14 (App Router) |
-| Language | TypeScript |
-| AI | Anthropic Claude Sonnet via `@anthropic-ai/sdk` |
-| Streaming | Native `ReadableStream` from the Anthropic SDK |
-| PDF parsing | `unpdf` (serverless-compatible) |
-| UI components | shadcn/ui (Radix UI + Tailwind CSS) |
-| Fonts | Geist, Geist Mono (local variable fonts) |
-| Deployment | Vercel |
-
----
-
-## Run locally
+You need [Node.js](https://nodejs.org) 22 or newer (24 recommended) and an API key from an AI provider.
 
 ```bash
-git clone <repo>
+git clone https://github.com/botbae/alt-interview-demo.git
 cd alt-interview-demo
 npm install
+cp .env.example .env.local
 ```
 
-Create `.env.local`:
-
-```
-ANTHROPIC_API_KEY=your_key_here
-```
+Open `.env.local` and add your key, then:
 
 ```bash
 npm run dev
 ```
 
-Open [localhost:3000](http://localhost:3000), upload a PDF resume, and start the interview.
+Go to [http://localhost:3000](http://localhost:3000).
 
----
+## Pick your AI
 
-## Known limitations
+Set these in `.env.local`:
 
-- **No authentication.** Anyone with the URL can run an interview session.
-- **Single session per browser.** `localStorage` ties the session to one device and browser tab.
-- **30s API timeout.** The Vercel function has a 30-second max duration. Slow responses from the model may time out.
-- **Phase logic is client-side.** Phase state lives in the browser. A cleared cache restarts the interview.
-- **No transcript export.** The interview ends with no way to save or share the result.
+| Provider | `LLM_PROVIDER` | `LLM_BASE_URL` | Reads scans? |
+|---|---|---|---|
+| Anthropic (Claude) | `anthropic` | (leave empty) | Yes |
+| OpenAI | `openai` | (leave empty) | Images yes; scanned PDFs may not read, so upload a PNG/JPG or paste |
+| Google Gemini | `openai` | `https://generativelanguage.googleapis.com/v1beta/openai` | Try `LLM_VISION=true`; check Gemini's docs |
+| Groq | `openai` | `https://api.groq.com/openai/v1` | No |
+| Cerebras | `openai` | `https://api.cerebras.ai/v1` | No |
+| Ollama (local, free) | `openai` | `http://localhost:11434/v1` | Only with a vision model |
 
----
+Set `LLM_MODEL` to choose a model (defaults: `claude-sonnet-5-5`, `gpt-5-mini`). Smaller models follow the interview rules less reliably. If a scan can't be read, the app always falls back to asking for pasted text.
 
-## Future improvements
+## How it works
 
-- **Evaluator layer.** A second model pass that reads the full transcript and produces a structured signal report — ownership clarity, ambiguity tolerance, taste level, red flags.
-- **Interviewer personas.** Configurable voice and focus area per role or team.
-- **Admin view.** A separate interface to review transcripts and compare candidates.
-- **Multi-session support.** Replace `localStorage` with a server-side session tied to a candidate invite link.
-- **Transcript export.** End-of-interview PDF or structured JSON output.
+```
+Browser                                   Server (Next.js API routes)            AI provider
+-------                                   ---------------------------            -----------
+Upload page ── file ─────────────────────► /api/extract  (checks type, size,
+            ◄─ text ──────────────────────                pages; AI reads scans) ──► model
+Chat page ── step + chat + resume + JD ──► /api/interview (checks, rate limit) ───► model
+          ◄─ streamed reply ─────────────                                       ◄──
+  counts turns, moves to next step
+Report page ── transcript ───────────────► /api/report   (scores as JSON) ───────► model
+```
 
----
+| Folder | What's inside |
+|---|---|
+| `app/` | Pages (`/`, `/interview`, `/report`) and the API routes |
+| `components/` | UI pieces (upload box, chat list, score bars) and shadcn/ui primitives |
+| `lib/phases.ts` | The interview rulebook: steps, turn limits, step changes |
+| `lib/prompts.ts` | All interviewer wording and the scoring rubric. **Start here to customise.** |
+| `lib/llm.ts` | Provider adapter (Anthropic or OpenAI-compatible) |
+| `lib/extract.ts` | File checks and text extraction |
+| `lib/validate.ts`, `lib/guard.ts`, `lib/rate-limit.ts` | Input checks, access code and limits |
+| `tests/` | Unit and API tests (`npm test`) |
 
-Built by [Ayan Aggarwal](https://linkedin.com/in/ayanaggarwal) as a product design prototype.
+## Customise it
+
+- **Persona:** `INTERVIEWER_NAME`, `INTERVIEWER_ROLE`, `COMPANY_NAME` in `.env.local`.
+- **Questions and tone:** `lib/prompts.ts`.
+- **Number of turns per step:** `PHASE_LIMITS` in `lib/phases.ts`.
+- **Skills in the report:** `COMPETENCIES` in `lib/prompts.ts`.
+
+## Deploying it
+
+It's a standard Next.js app, so it runs anywhere Node runs (`npm run build && npm start`), or on hosts like Vercel, Netlify or Render. **Before you share a public link:**
+
+1. Set a monthly **spend limit** in your AI provider's console.
+2. Set `ACCESS_CODE` so only invited people can use it.
+3. Read [SECURITY.md](SECURITY.md).
+
+## Limits, honestly
+
+- It's a prototype, not a hiring product. The report is a starting point for a human reviewer, **never a hiring decision**. AI used in hiring is regulated in some places (for example the EU AI Act and New York City's bias-audit law), so check before using it for real candidates.
+- The AI does not open GitHub or LinkedIn links. They're passed along as text.
+- Rate limits live in server memory, so they reset on restart and count separately per serverless instance.
+- One interview per browser. Clearing site data restarts it.
+
+## Scripts
+
+| Command | What it does |
+|---|---|
+| `npm run dev` | Start locally with hot reload |
+| `npm run build` / `npm start` | Production build and server |
+| `npm test` | Run the tests |
+| `npm run lint` / `npm run typecheck` | Code checks |
+
+## Contributing
+
+Ideas and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) and the [ROADMAP](ROADMAP.md).
+
+## License
+
+[MIT](LICENSE)
