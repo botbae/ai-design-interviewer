@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 
@@ -14,8 +14,15 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "AI Product Design Interview",
-  description: "AI-led product design interview prototype by Ayan Aggarwal",
+  title: "AI Design Interviewer",
+  description: "An open-source AI interviewer for first-round product design interviews",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#0b0f14",
 };
 
 export default function RootLayout({
