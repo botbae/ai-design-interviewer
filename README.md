@@ -34,8 +34,8 @@ Everything stays in the candidate's browser. There's no database and no login.
 You need [Node.js](https://nodejs.org) 22 or newer (24 recommended) and an API key from an AI provider.
 
 ```bash
-git clone https://github.com/botbae/alt-interview-demo.git
-cd alt-interview-demo
+git clone https://github.com/botbae/ai-design-interviewer.git
+cd ai-design-interviewer
 npm install
 cp .env.example .env.local
 ```
