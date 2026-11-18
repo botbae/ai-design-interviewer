@@ -99,6 +99,24 @@ export default function Home() {
 
         <Card className="bg-[#0f1520] ring-white/[0.06] shadow-2xl shadow-black/60 rounded-2xl">
           <CardContent className="flex flex-col gap-6 pt-6 pb-6">
+            {config?.accessCodeRequired && (
+              <label htmlFor="access-code" className="flex flex-col gap-2">
+                <span className={labelClass}>Access code</span>
+                <Input
+                  id="access-code"
+                  type="password"
+                  autoComplete="off"
+                  value={accessCode}
+                  onChange={e => {
+                    setAccessCode(e.target.value);
+                    // Save right away so file uploads can use it too.
+                    store.setAccessCode(e.target.value.trim());
+                  }}
+                  className={inputClass}
+                />
+              </label>
+            )}
+
             <DocumentInput
               label="Resume"
               kind="resume"
@@ -146,19 +164,6 @@ export default function Home() {
               </span>
             </label>
 
-            {config?.accessCodeRequired && (
-              <label htmlFor="access-code" className="flex flex-col gap-2">
-                <span className={labelClass}>Access code</span>
-                <Input
-                  id="access-code"
-                  type="password"
-                  autoComplete="off"
-                  value={accessCode}
-                  onChange={e => setAccessCode(e.target.value)}
-                  className={inputClass}
-                />
-              </label>
-            )}
 
             {error && (
               <p ref={errorRef} tabIndex={-1} role="alert" className="text-xs text-red-400">

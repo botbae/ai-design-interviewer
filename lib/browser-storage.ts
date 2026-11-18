@@ -3,7 +3,7 @@
 // Everything about one interview lives in this browser only.
 // Nothing is saved on the server.
 
-import type { ChatMessage, Phase } from './phases';
+import { isPhase, type ChatMessage, type Phase } from './phases';
 import type { InterviewReport } from './report';
 import type { Candidate } from './validate';
 
@@ -37,8 +37,21 @@ function write(key: string, value: unknown) {
 export const store = {
   candidate: () => read<Candidate>(KEYS.candidate),
   transcript: () => read<ChatMessage[]>(KEYS.transcript) ?? [],
-  phase: () => read<Phase>(KEYS.phase),
-  phaseCount: () => read<number>(KEYS.phaseCount) ?? 0,
+  phase: (): Phase | null => {
+    // Older versions saved the step as a plain string, newer ones as JSON. Accept both.
+    try {
+      const raw = localStorage.getItem(KEYS.phase);
+      if (isPhase(raw)) return raw;
+    } catch {
+      return null;
+    }
+    const parsed = read<unknown>(KEYS.phase);
+    return isPhase(parsed) ? parsed : null;
+  },
+  phaseCount: () => {
+    const n = Number(read<number>(KEYS.phaseCount));
+    return Number.isInteger(n) && n >= 0 ? n : 0;
+  },
   startedAt: () => read<number>(KEYS.startedAt),
   report: () => read<InterviewReport>(KEYS.report),
   accessCode: () => read<string>(KEYS.accessCode) ?? '',
