@@ -83,15 +83,21 @@ export async function* streamText(s: LlmSettings, r: LlmRequest): AsyncGenerator
 }
 
 /**
- * OpenAI's reasoning models (gpt-5, o-series) need max_completion_tokens, and their
- * hidden reasoning counts against it, so give them headroom and keep reasoning light.
- * Other OpenAI-compatible hosts (Ollama, Groq, Cerebras, Gemini) use max_tokens.
+ * Reasoning models spend hidden "thinking" tokens from the same output budget, so
+ * give them headroom and keep the thinking light:
+ * - OpenAI gpt-5 and o-series need max_completion_tokens.
+ * - Cerebras models (gpt-oss, qwen) reason by default; qwen can switch it off.
+ * Other OpenAI-compatible hosts (Ollama, Groq, Gemini) use max_tokens.
  */
 export function tokenLimit(s: LlmSettings, maxTokens: number): Record<string, unknown> {
-  const reasoning = s.baseUrl === 'https://api.openai.com/v1' && /^(gpt-5|o\d)/.test(s.model);
-  return reasoning
-    ? { max_completion_tokens: maxTokens * 4, reasoning_effort: 'low' }
-    : { max_tokens: maxTokens };
+  if (s.baseUrl === 'https://api.openai.com/v1' && /^(gpt-5|o\d)/.test(s.model)) {
+    return { max_completion_tokens: maxTokens * 4, reasoning_effort: 'low' };
+  }
+  if (s.baseUrl.startsWith('https://api.cerebras.ai')) {
+    const effort = /^qwen/i.test(s.model) ? 'none' : /^gpt-oss/i.test(s.model) ? 'low' : undefined;
+    return effort ? { max_completion_tokens: maxTokens * 4, reasoning_effort: effort } : { max_tokens: maxTokens };
+  }
+  return { max_tokens: maxTokens };
 }
 
 /** Reads an OpenAI-style server-sent-events stream and yields the text pieces. */

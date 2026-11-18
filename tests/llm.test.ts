@@ -61,4 +61,11 @@ describe('tokenLimit', () => {
     const ollama = getLlmSettings(env({ LLM_PROVIDER: 'openai', LLM_BASE_URL: 'http://localhost:11434/v1', LLM_MODEL: 'llama3.2' }));
     expect(tokenLimit(ollama, 100)).toEqual({ max_tokens: 100 });
   });
+
+  it('keeps Cerebras reasoning light so replies are not cut off', () => {
+    const base = { LLM_PROVIDER: 'openai', LLM_API_KEY: 'k', LLM_BASE_URL: 'https://api.cerebras.ai/v1' };
+    expect(tokenLimit(getLlmSettings(env({ ...base, LLM_MODEL: 'gpt-oss-120b' })), 100)).toEqual({ max_completion_tokens: 400, reasoning_effort: 'low' });
+    expect(tokenLimit(getLlmSettings(env({ ...base, LLM_MODEL: 'qwen-3.8-27b' })), 100)).toEqual({ max_completion_tokens: 400, reasoning_effort: 'none' });
+    expect(tokenLimit(getLlmSettings(env({ ...base, LLM_MODEL: 'llama-x' })), 100)).toEqual({ max_tokens: 100 });
+  });
 });
